@@ -24,9 +24,16 @@ permissions:
 
 jobs:
   relabel:
-    # Cheap pre-filter: only run on issues the bot just labeled "perf-regression",
-    # and skip forks outside the 'dotnet' org.
-    if: ${{ github.repository_owner == 'dotnet' && contains(github.event.issue.labels.*.name, 'perf-regression') }}
+    # Pre-filter: only run on issues the perf regression bot just filed
+    # with the canonical (area-perf + perf-regression) label pair, and
+    # skip forks outside the 'dotnet' org. Together these guarantee we
+    # only act on bot-authored perf issues — not, e.g., a human bug
+    # report that happens to carry a `perf-regression` label.
+    if: >-
+      ${{ github.repository_owner == 'dotnet'
+          && github.event.issue.user.login == 'pr-benchmarks[bot]'
+          && contains(github.event.issue.labels.*.name, 'area-perf')
+          && contains(github.event.issue.labels.*.name, 'perf-regression') }}
     runs-on: ubuntu-latest
     steps:
       - name: Detect direction and swap labels
